@@ -1,3 +1,6 @@
 [submodule "boringtun"]
 	path = boringtun
 	url = https://github.com/blokadaorg/boringtun.git
+[submodule "landing-github-pages"]
+	path = landing-github-pages
+	url = https://github.com/blokadaorg/landing-github-pages.git
