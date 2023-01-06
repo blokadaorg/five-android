@@ -1,0 +1,21 @@
+[workspace]
+
+members = [
+  "blocka_api",
+  "blocka_dns",
+  "engine",
+  "util",
+]
+
+[patch.crates-io]
+trust-dns-client = { git = "https://github.com/bluejekyll/trust-dns.git", rev = "e1ef6e08" }
+trust-dns-https = { git = "https://github.com/bluejekyll/trust-dns.git", rev = "e1ef6e08" }
+trust-dns-proto = { git = "https://github.com/bluejekyll/trust-dns.git", rev = "e1ef6e08" }
+trust-dns-resolver = { git = "https://github.com/bluejekyll/trust-dns.git", rev = "e1ef6e08" }
+trust-dns-rustls = { git = "https://github.com/bluejekyll/trust-dns.git", rev = "e1ef6e08" }
+trust-dns-server = { git = "https://github.com/bluejekyll/trust-dns.git", rev = "e1ef6e08" }
+
+doh-dns = { git = "https://github.com/balboah/doh-dns.git" }
+
+[profile.dev]
+opt-level = 1
