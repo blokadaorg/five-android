@@ -39,7 +39,6 @@ import com.akexorcist.localizationactivity.ui.LocalizationActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import model.AppStage
@@ -75,13 +74,10 @@ class MainActivity : LocalizationActivity(), PreferenceFragmentCompat.OnPreferen
 
     private val sheet = Services.sheet
     private val dialog by lazy { DialogService }
-    private val flutter by lazy { FlutterService }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Logger.v("MainActivity", "onCreate: $this")
-
-        flutter.setup()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         ContextService.setActivityContext(this)

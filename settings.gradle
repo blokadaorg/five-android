@@ -10,11 +10,5 @@
  * @author Karol Gusak (karol@blocka.net)
  */
 
-rootProject.name = "Blokada"
+rootProject.name = "five-android"
 include ':app'
-
-setBinding(new Binding([gradle: this]))
-evaluate(new File(
-  settingsDir.parentFile,
-  'common/.android/include_flutter.groovy'
-)) 
