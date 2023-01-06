@@ -8,7 +8,7 @@ export ANDROID_NDK_HOME=$ANDROID_NDK
 # Last NDK known to build fine: 22.1.7171670
 echo "Using NDK location: $ANDROID_NDK_HOME"
 
-JNI_LIBS=android5/app/src/libre/jniLibs
+JNI_LIBS=app/src/libre/jniLibs
 
 mkdir -p $JNI_LIBS/arm64-v8a
 mkdir -p $JNI_LIBS/armeabi-v7a
@@ -24,5 +24,10 @@ cargo ndk --platform 21 --target armv7-linux-androideabi build --release
 cd ../../
 cp ./blocka_engine/target/aarch64-linux-android/release/libblocka_dns.so $JNI_LIBS/arm64-v8a/
 cp ./blocka_engine/target/armv7-linux-androideabi/release/libblocka_dns.so $JNI_LIBS/armeabi-v7a/
+
+hash=$(git describe --abbrev=4 --always --tags --dirty)
+commit="sync: update blocka-engine to: $hash"
+echo $commit
+git commit -am "$commit"
 
 echo "Done"
