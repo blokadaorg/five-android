@@ -1,0 +1,3 @@
+[submodule "boringtun"]
+	path = boringtun
+	url = https://github.com/blokadaorg/boringtun.git
