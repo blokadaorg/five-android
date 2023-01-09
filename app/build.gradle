@@ -204,15 +204,6 @@ dependencies {
     implementation 'dnsjava:dnsjava:2.1.9'
     implementation 'org.slf4j:slf4j-nop:1.6.1'
 
-    // wireguard deps
-    implementation fileTree(include: ['*.aar'], dir: 'wireguard-android/lib')
-    implementation "androidx.datastore:datastore-preferences:1.0.0"
-    implementation "androidx.annotation:annotation:1.4.0"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.1"
-    implementation "androidx.activity:activity-ktx:1.5.1"
-    implementation "androidx.fragment:fragment-ktx:1.5.1"
-
-
     // unzip default blocklist
     implementation 'net.lingala.zip4j:zip4j:2.6.4'
 

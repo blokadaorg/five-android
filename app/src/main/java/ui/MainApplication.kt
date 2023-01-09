@@ -14,30 +14,17 @@ package ui
 
 import android.app.Activity
 import android.app.Service
-import android.os.Build
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import blocka.LegacyAccountImport
 import com.akexorcist.localizationactivity.ui.LocalizationApplication
-import com.wireguard.android.backend.Backend
-import com.wireguard.android.backend.GoBackend
-import com.wireguard.android.configStore.FileConfigStore
-import com.wireguard.android.model.TunnelManager
-import com.wireguard.android.util.RootShell
-import com.wireguard.android.util.ToolsInstaller
-import com.wireguard.android.util.UserKnobs
-import com.wireguard.android.util.applicationScope
 import engine.EngineService
 import engine.FilteringService
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import model.AppState
 import model.BlockaConfig
 import model.BlockaRepoConfig
@@ -46,7 +33,6 @@ import repository.Repos
 import service.*
 import ui.utils.cause
 import utils.Logger
-import java.lang.ref.WeakReference
 import java.util.*
 
 class MainApplication: LocalizationApplication(), ViewModelStoreOwner {
@@ -73,7 +59,6 @@ class MainApplication: LocalizationApplication(), ViewModelStoreOwner {
         LogService.setup()
         LegacyAccountImport.setup()
         DozeService.setup(this)
-        wgOnCreate()
         setupEvents()
         MonitorService.setup(settingsVM.getUseForegroundService())
         Repos.start()
@@ -219,105 +204,20 @@ class MainApplication: LocalizationApplication(), ViewModelStoreOwner {
         return TranslationService.getLocale()
     }
 
-    // Stuff taken from Wireguard
-    private val futureBackend = CompletableDeferred<Backend>()
-    private val coroutineScope = CoroutineScope(Job() + Dispatchers.Main.immediate)
-    private var backend: Backend? = null
-    private lateinit var rootShell: RootShell
-    private lateinit var preferencesDataStore: DataStore<Preferences>
-    private lateinit var toolsInstaller: ToolsInstaller
-    private lateinit var tunnelManager: TunnelManager
-
-    private suspend fun determineBackend(): Backend {
-        var backend: Backend? = null
-//        if (UserKnobs.enableKernelModule.first() && WgQuickBackend.hasKernelSupport()) {
-//            try {
-//                rootShell.start()
-//                val wgQuickBackend = WgQuickBackend(applicationContext, rootShell, toolsInstaller)
-//                wgQuickBackend.setMultipleTunnels(UserKnobs.multipleTunnels.first())
-//                backend = wgQuickBackend
-//                UserKnobs.multipleTunnels.onEach {
-//                    wgQuickBackend.setMultipleTunnels(it)
-//                }.launchIn(coroutineScope)
-//            } catch (ignored: Exception) {
-//            }
-//        }
-        if (backend == null) {
-            backend = GoBackend(applicationContext)
-            GoBackend.setAlwaysOnCallback { get().applicationScope.launch { get().tunnelManager.restoreState(true) } }
-        }
-        return backend
-    }
-
-    private fun wgOnCreate() {
-        rootShell = RootShell(applicationContext)
-        toolsInstaller = ToolsInstaller(applicationContext, rootShell)
-        preferencesDataStore = PreferenceDataStoreFactory.create { applicationContext.preferencesDataStoreFile("settings") }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            coroutineScope.launch {
-                AppCompatDelegate.setDefaultNightMode(
-                    if (UserKnobs.darkTheme.first()) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO)
-            }
-        } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        }
-        tunnelManager = TunnelManager(FileConfigStore(applicationContext))
-        tunnelManager.onCreate()
-        coroutineScope.launch(Dispatchers.IO) {
-            try {
-                backend = determineBackend()
-                futureBackend.complete(backend!!)
-            } catch (e: Throwable) {
-                Logger.e("Main", "Failed to determine wg backend".cause(e))
-            }
-        }
-    }
-
 //    override fun onTerminate() {
 //        coroutineScope.cancel()
 //        super.onTerminate()
 //    }
 
-    init {
-        weakSelf = WeakReference(this)
-    }
-
-    // Stuff taken from Wireguard
     companion object {
-        private lateinit var weakSelf: WeakReference<MainApplication>
-
-        @JvmStatic
-        fun get(): MainApplication {
-            return weakSelf.get()!!
-        }
-
-        @JvmStatic
-        suspend fun getBackend() = get().futureBackend.await()
-
-        @JvmStatic
-        fun getRootShell() = get().rootShell
-
-        @JvmStatic
-        fun getPreferencesDataStore() = get().preferencesDataStore
-
-        @JvmStatic
-        fun getToolsInstaller() = get().toolsInstaller
-
-        @JvmStatic
-        fun getTunnelManager() = get().tunnelManager
-
-        @JvmStatic
-        fun getCoroutineScope() = get().coroutineScope
-
         /**
-         * Not sure if doing it right, but some ViewModel in our app should be scoped to the
-         * application, since they are relevant for when the app is started by the SystemTunnel
-         * (as apposed to MainActivity). This probably would be solved better if some LiveData
-         * objects within some of the ViewModels would not be owned by them.
-         */
+        * Not sure if doing it right, but some ViewModel in our app should be scoped to the
+        * application, since they are relevant for when the app is started by the SystemTunnel
+        * (as apposed to MainActivity). This probably would be solved better if some LiveData
+        * objects within some of the ViewModels would not be owned by them.
+        */
         val viewModelStore = ViewModelStore()
     }
-
 }
 
 fun Activity.app(): MainApplication {

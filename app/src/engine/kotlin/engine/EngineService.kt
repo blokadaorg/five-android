@@ -38,7 +38,6 @@ object EngineService {
     private val dnsService = BlockaDnsService
     private val configurator = SystemTunnelConfigurator
     private val vpnPerm = VpnPermissionService
-    private val wgTunnel = WgTunnel
     private val scope = GlobalScope
 
     private lateinit var config: EngineConfiguration
@@ -138,11 +137,6 @@ object EngineService {
         state.inProgress()
         config.run {
             when {
-                // Plus mode for v6 (cloud filtering)
-                isPlusMode() && !EnvironmentService.isLibre() -> {
-                    wgTunnel.start(config.privateKey, config.lease(), config.gateway())
-                    state.plusMode(config)
-                }
                 // Plus mode for v5 (local filtering)
                 isPlusMode() -> {
                     dnsMapper.setDns(dns, doh, plusMode = true)
@@ -191,7 +185,6 @@ object EngineService {
         dnsService.stopDnsProxy()
         packetLoop.stop()
         systemTunnel.close()
-        wgTunnel.stop()
         log.w("Waiting after stopping system tunnel, before another start")
         delay(4000)
         state.stopped()
