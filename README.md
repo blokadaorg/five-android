@@ -1,8 +1,14 @@
 # Blokada 5
 
-Blokada 5 is the next generation of the well known open source mobile ad blocker and privacy app.
+Blokada 5 is the well known open source mobile ad blocker and privacy app.
 
 Want to try it out? **[Click here to download Blokada](https://go.blokada.org/download_section)**.
+
+## Difference to Blokada 6
+
+There is also Blokada 6 with cloud adblocking (as opposed to on-device adblocking of Blokada 5). It works better for most users, but requires a subscription. [Click here to open Google Play Store](https://go.blokada.org/play_cloud).
+
+Both editions are being developed independently. See our main Github page for the source code.
 
 ## Getting started
 
@@ -14,7 +20,7 @@ The Blokada community welcomes everyone! before you ask a question, please get y
 
 We invite you to join any of our network and stay up to date with the newest developments.
 
-[Forums](https://go.blokada.org/forum) | [Telegram](https://go.blokada.org/chat) | [Keybase](https://keybase.io/blocka) | [Twitter](https://go.blokada.org/social_twitter) | [Facebook](https://go.blokada.org/social_facebook)
+[Forums](https://go.blokada.org/forum) | [Telegram](https://go.blokada.org/chat) | [Twitter](https://go.blokada.org/social_twitter) | [Facebook](https://go.blokada.org/social_facebook)
 
 ## Issues and feature requests
 
