@@ -91,11 +91,6 @@ android {
             minSdkVersion 21
         }
 
-        six {
-            // Blokada 6 that lands on Google Play (Cloud/Plus only).
-            applicationId "org.blokada.sex"
-        }
-
         googleslim {
             // googleslim is a legacy "Slim" build that got banned from Google Play.
             // It'll be phased out eventually once users are migrated away.
