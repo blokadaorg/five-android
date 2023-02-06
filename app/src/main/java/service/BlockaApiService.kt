@@ -27,6 +27,7 @@ import java.io.IOException
 import java.net.UnknownHostException
 
 
+// TODO: refactor to not include the v6 requests that are just mocked here.
 object BlockaApiService {
 
     private val http = HttpService
@@ -55,16 +56,14 @@ object BlockaApiService {
 
     suspend fun getDevice(id: AccountId): DevicePayload {
         return runOnBgAndMapException {
-            if (EnvironmentService.isLibre()) {
-                // Save requests by not doing this irrelevant request for v5
-                Logger.v("BlockaApiService", "Not fetching device for libre")
-                DevicePayload(
-                    lists = emptyList(),
-                    retention = "",
-                    paused = true,
-                    device_tag = ""
-                )
-            } else api.getDevice(id).responseOrThrow().body()!!
+            // Save requests by not doing this irrelevant request for v5
+            Logger.v("BlockaApiService", "Not fetching device for libre")
+            DevicePayload(
+                lists = emptyList(),
+                retention = "",
+                paused = true,
+                device_tag = ""
+            )
         }
     }
 
@@ -76,13 +75,17 @@ object BlockaApiService {
 
     suspend fun getActivity(id: AccountId): List<Activity> {
         return runOnBgAndMapException {
-            api.getActivity(id).responseOrThrow().body()!!.activity
+            // Save requests by not doing this irrelevant request for v5
+            Logger.v("BlockaApiService", "Not fetching activity for libre")
+            emptyList()
         }
     }
 
     suspend fun getCustomList(id: AccountId): List<CustomListEntry> {
         return runOnBgAndMapException {
-            api.getCustomList(id).responseOrThrow().body()!!.customlist
+            // Save requests by not doing this irrelevant request for v5
+            Logger.v("BlockaApiService", "Not fetching customlist for libre")
+            emptyList()
         }
     }
 
@@ -100,20 +103,20 @@ object BlockaApiService {
 
     suspend fun getStats(id: AccountId): CounterStats {
         return runOnBgAndMapException {
-            if (EnvironmentService.isLibre()) {
-                // Save requests by not doing this irrelevant request for v5
-                Logger.v("BlockaApiService", "Not fetching stats for libre")
-                CounterStats(
-                    total_allowed = "0",
-                    total_blocked = "0"
-                )
-            } else api.getStats(id).responseOrThrow().body()!!
+            // Save requests by not doing this irrelevant request for v5
+            Logger.v("BlockaApiService", "Not fetching stats for libre")
+            CounterStats(
+                total_allowed = "0",
+                total_blocked = "0"
+            )
         }
     }
 
     suspend fun getBlocklists(id: AccountId): List<Blocklist> {
         return runOnBgAndMapException {
-            api.getBlocklists(id).responseOrThrow().body()!!.lists
+            // Save requests by not doing this irrelevant request for v5
+            Logger.v("BlockaApiService", "Not fetching blocklists for libre")
+            emptyList()
         }
     }
 
