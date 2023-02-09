@@ -123,9 +123,6 @@ android {
         main.java.srcDirs += 'src/engine/kotlin'
         main.jniLibs.srcDirs += 'src/engine/jniLibs'
 
-        main.java.srcDirs += 'wireguard-android/ui/src/main/java'
-        main.res.srcDirs += 'wireguard-android/ui/src/main/res'
-
         debug.java.srcDirs += 'src/mock/kotlin'
 
         googleslim.res.srcDirs += 'src/google/res'
