@@ -78,9 +78,7 @@ object UpdateService {
         updateInfo?.let {
             val ctx = context.requireContext()
             alert.showAlert(
-                message = ctx.getString(R.string.alert_update_body,
-                    if (env.isLibre()) "5" else "6" // Hide actual version numbers after rebrand
-                ),
+                message = ctx.getString(R.string.alert_update_body, "5"), // Blokada 5
                 title = ctx.getString(R.string.notification_update_header),
                 positiveAction = ctx.getString(R.string.universal_action_download) to {
                     showUpdatingAlert(it.infoUrl)
@@ -91,8 +89,10 @@ object UpdateService {
                         }
                     }
                 },
-                onDismiss = {
+                additionalAction = ctx.getString(R.string.universal_action_hide) to {
                     markUpdateAsSeen(it)
+                },
+                onDismiss = {
                     notification.cancel(UpdateNotification(it.newest))
                     updateInfo = null
                 }

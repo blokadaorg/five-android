@@ -40,7 +40,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import model.AppStage
 import model.PrivateDnsConfigured
@@ -397,6 +396,7 @@ class MainActivity : LocalizationActivity(), PreferenceFragmentCompat.OnPreferen
     override fun onDestroy() {
         Logger.w("MainActivity", "onDestroy: $this")
         super.onDestroy()
+        ContextService.unsetActivityContext()
         Repos.stage.onDestroy()
     }
 
