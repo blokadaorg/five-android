@@ -1,0 +1,27 @@
+name: Blokada 5 for Android (CI)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+env:
+  main_project_module: app
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Get JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Build app
+        run: ./gradlew assembleFiveRelease
