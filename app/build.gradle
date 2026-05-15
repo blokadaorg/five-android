@@ -19,7 +19,8 @@ apply plugin: "androidx.navigation.safeargs.kotlin"
 apply plugin: "kotlin-kapt"
 
 android {
-    compileSdkVersion 33
+    namespace "org.blokada"
+    compileSdkVersion 34
     ndkVersion "24.0.8215888"
 
     buildFeatures {
@@ -157,57 +158,59 @@ android {
 
 dependencies {
     // forgot what is it for
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 
     // androidx and kotlin
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.7.0"
-    implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'com.google.android.material:material:1.8.0-beta01'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
+    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    //implementation 'androidx.navigation:navigation-fragment:2.4.1'
-    //implementation 'androidx.navigation:navigation-ui:2.4.1'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
-    implementation 'androidx.preference:preference-ktx:1.2.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.6.0'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.6.0'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.browser:browser:1.4.0'
-    implementation 'androidx.webkit:webkit:1.5.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2'
+    implementation 'androidx.browser:browser:1.6.0'
+    implementation 'androidx.webkit:webkit:1.7.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
     // json
-    implementation 'com.squareup.moshi:moshi:1.13.0'
-    implementation 'com.squareup.moshi:moshi-adapters:1.13.0'
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
+    implementation 'com.squareup.moshi:moshi:1.15.1'
+    implementation 'com.squareup.moshi:moshi-adapters:1.15.1'
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
     // http and rest
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.14.9'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
 
     // dynamic translations
     implementation 'com.akexorcist:localization:1.2.9'
 
     // engine deps
+    // pcap4j is pinned at 1.7.7: it lives at the heart of the VPN packet loop
+    // (see PacketLoopFor*.kt), so a major bump risks subtle behavior changes
+    // without test coverage to catch them. 1.8 also drops/moves
+    // PacketFactoryPropertiesLoader which the loop uses.
     implementation 'org.pcap4j:pcap4j-core:1.7.7'
     implementation 'org.pcap4j:pcap4j-packetfactory-propertiesbased:1.7.7'
     implementation 'dnsjava:dnsjava:2.1.9'
-    implementation 'org.slf4j:slf4j-nop:1.6.1'
+    implementation 'org.slf4j:slf4j-nop:1.7.36'
 
     // unzip default blocklist
-    implementation 'net.lingala.zip4j:zip4j:2.6.4'
+    implementation 'net.lingala.zip4j:zip4j:2.11.5'
 
     // External integration (Tasker)
     implementation 'com.twofortyfouram:android-plugin-client-sdk-for-locale:4.0.3'
 
     // Google in app billing
-    implementation 'com.android.billingclient:billing:5.1.0'
-    implementation 'com.android.billingclient:billing-ktx:5.1.0'
+    implementation 'com.android.billingclient:billing:6.2.1'
+    implementation 'com.android.billingclient:billing-ktx:6.2.1'
 
     // Hopefully normal date api?
-    implementation 'net.danlew:android.joda:2.10.14'
+    implementation 'net.danlew:android.joda:2.12.7'
 
     // Biometric api to protect account id
     implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"

@@ -53,7 +53,7 @@ object HttpService {
         val request = Request.Builder()
             .url(url)
             .build()
-        return httpClient.newCall(request).execute().body()!!.string()
+        return httpClient.newCall(request).execute().body!!.string()
     }
 
 }
