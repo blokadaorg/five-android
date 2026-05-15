@@ -157,7 +157,7 @@ android {
 }
 
 dependencies {
-    // forgot what is it for
+    // Java 8+ language APIs (e.g. java.time) on minSdk 21
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 
     // androidx and kotlin

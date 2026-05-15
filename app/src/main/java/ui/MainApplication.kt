@@ -22,7 +22,6 @@ import com.akexorcist.localizationactivity.ui.LocalizationApplication
 import engine.EngineService
 import engine.FilteringService
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import model.AppState
