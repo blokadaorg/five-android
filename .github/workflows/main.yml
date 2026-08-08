@@ -51,6 +51,7 @@ jobs:
           echo "${ANDROID_HOME}/platform-tools" >> $GITHUB_PATH
           echo "ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/24.0.8215888" >> $GITHUB_ENV
           echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/24.0.8215888" >> $GITHUB_ENV
+
       - name: Create local.properties
         run: |
           echo "sdk.dir=${ANDROID_HOME}" > ./local.properties
@@ -65,11 +66,12 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+
       - name: Clean project
         run: ./gradlew clean
-      
+
       - name: Build app (debug) & lint
-        run: ./gradlew --warning-mode all :app:assembleFiveDebug :app:lint 
+        run: ./gradlew --warning-mode all :app:assembleFiveDebug :app:lint
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -92,8 +94,75 @@ jobs:
         with:
           name: lint-text
           path: app/build/intermediates/lint_intermediate_text_report/**/lint-results-*.txt
-      
+
       - name: Run Unit Tests (non-blocking for now)
         run: ./gradlew test
         continue-on-error: true
-    
+
+  integration_tests:
+    name: Integration tests (requires network / emulator)
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Install Android SDK (including system image)
+        run: |
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          curl -fo sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip sdk-tools.zip -d $ANDROID_HOME/cmdline-tools
+          mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          echo "Installing SDK components..."
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-33" \
+            "build-tools;33.0.0" \
+            "system-images;android-33;google_apis;x86_64"
+
+      - name: Set up environment variables
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME}" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=${ANDROID_HOME}" >> $GITHUB_ENV
+          echo "${ANDROID_HOME}/platform-tools" >> $GITHUB_PATH
+
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=${ANDROID_HOME}" > ./local.properties
+
+      - name: Start Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          emulator-options: -no-window -no-audio -gpu swiftshader_indirect
+
+      - name: Run integration (instrumentation) tests
+        env:
+          ADB_INSTALL_TIMEOUT: 200000
+        run: |
+          ADB_INSTALL_TIMEOUT=${ADB_INSTALL_TIMEOUT} ./gradlew connectedAndroidTest --no-daemon --stacktrace
+
+      - name: Upload instrumentation test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: |
+            app/build/outputs/androidTest-results/**/*.xml
+            app/build/reports/androidTests/connected/**
