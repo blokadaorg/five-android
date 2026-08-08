@@ -1,20 +1,11 @@
-/*
- * This file is part of Blokada.
- *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright © 2021 Blocka AB. All rights reserved.
- *
- * @author Karol Gusak (karol@blocka.net)
- */
+@file:Suppress("UnstableApiUsage")
 
 package repository
 
 import model.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -30,6 +21,7 @@ import kotlin.test.assertTrue
  *
  * Run with: ./gradlew testDebugUnitTest -k "DnsServerFunctionality"
  */
+@Ignore("Requires network; moved to androidTest/DnsServerFunctionalityTest")
 @RunWith(Parameterized::class)
 class DnsServerFunctionalityTest(
     private val dns: Dns
