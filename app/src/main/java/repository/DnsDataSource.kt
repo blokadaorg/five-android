@@ -96,6 +96,15 @@ object DnsDataSource {
             ips = listOf("76.76.19.19", "76.223.122.150", "2001:4801:7825:103:be76:4eff:fe10:2e49", "2001:4800:780e:510:a8cf:392e:ff04:8982"),
             label = "Alternate DNS"
         ),
+        Dns(
+            id = "artikel10",
+            ips = listOf("217.197.91.153", "2001:67c:1401:2120::1"),
+            port = 443,
+            name = "dns.artikel10.org",
+            path = "dns-query",
+            label = "Artikel10",
+            region = "europe"
+        ),
         cloudflare,
         Dns(
             id = "cloudflare.malware",
@@ -115,13 +124,60 @@ object DnsDataSource {
         ),
         Dns.plaintextDns(
             id = "digitalcourage",
-            ips = listOf("46.182.19.48", "5.9.164.112"),
-            label = "Digitalcourage"
+            ips = listOf("5.9.164.112", "2a01:4f8:251:554::2"),
+            label = "Digitalcourage",
+            region = "europe"
+        ),
+        Dns(
+            id = "digitalegesellschaft",
+            ips = listOf("185.95.218.42", "185.95.218.43", "2a05:fc84::42", "2a05:fc84::43"),
+            port = 443,
+            name = "dns.digitale-gesellschaft.ch",
+            path = "dns-query",
+            label = "Digitale Gesellschaft (Switzerland)",
+            canUseInCleartext = false,
+            region = "europe"
         ),
         Dns.plaintextDns(
-            id = "dismail",
-            ips = listOf("80.241.218.68", "159.69.114.157", "2a02:c205:3001:4558::1", "2a01:4f8:c17:739a::2"),
-            label = "Dismail",
+            id = "dismail.plain",
+            ips = listOf("116.203.32.217", "159.69.114.157", "2a01:4f8:1c1b:44aa::32:217", "2a01:4f8:1c1b:44aa::1", "2a01:4f8:c17:739a::2"),
+            label = "Dismail plain",
+            region = "europe"
+        ),
+        Dns(
+            id = "dismail.doh1",
+            ips = listOf("116.203.32.217", "2a01:4f8:1c1b:44aa::32:217", "2a01:4f8:1c1b:44aa::1"),
+            label = "Dismail DoH 1",
+            port = 443,
+            name = "fdns1.dismail.de",
+            path = "dns-query",       
+            region = "europe"
+        ),
+        Dns(
+            id = "dismail.doh2",
+            ips = listOf("159.69.114.157", "2a01:4f8:c17:739a::2"),
+            label = "Dismail DoH 2",
+            port = 443,
+            name = "fdns2.dismail.de",
+            path = "dns-query",       
+            region = "europe"
+        ),
+        Dns(
+            id = "dnsforge.normal",
+            ips = listOf("49.12.67.122", "91.99.154.175", "176.9.93.198", "176.9.1.117", "2a01:4f8:c013:29d::122", "2a01:4f8:c010:8c35::175", "2a01:4f8:151:34aa::198", "2a01:4f8:141:316d::117"),
+            label = "dnsforge",
+            port = 443,
+            name = "dnsforge.de",
+            path = "dns-query",       
+            region = "europe"
+        ),
+        Dns(
+            id = "dns.sb",
+            ips = listOf(185.222.222.222", "45.11.45.11", "2a09:0000:0000:0000:0000:0000:0000:00008", "2a11:0000:0000:0000:0000:0000:0000:0000"),
+            label = "dns.sb",
+            port = 443,
+            name = "doh.dns.sb",
+            path = "dns-query",       
             region = "europe"
         ),
         Dns.plaintextDns(
@@ -141,17 +197,6 @@ object DnsDataSource {
             label = "French Data Network",
             region = "europe"
         ),
-        // TODO #927: require DoH according to RFC 8484 support
-        //Dns(
-        //    id = "digitalegesellschaft",
-        //    ips = listOf("185.95.218.42", "185.95.218.43", "2a05:fc84::42", "2a05:fc84::43"),
-        //    port = 443,
-        //    name = "dns.digitale-gesellschaft.ch",
-        //    path = "dns-query",
-        //    label = "Digitale Gesellschaft (Switzerland)",
-        //    canUseInCleartext = false,
-        //    region = "europe"
-        //),
         Dns(
             id = "google",
             ips = listOf("8.8.8.8", "8.8.4.4", "2001:4860:4860::8888", "2001:4860:4860::8844"),
@@ -159,6 +204,24 @@ object DnsDataSource {
             name = "dns.google",
             path = "resolve",
             label = "Google"
+        ),
+        Dns(
+            id = "mullvad",
+            ips = listOf("194.242.2.2", "2a07:e340::2"),
+            port = 443,
+            name = "dns.mullvad.net",
+            path = "dns-query",
+            label = "Mullvad",
+            region = "europe"
+        ),
+        Dns(
+            id = "njalla",
+            ips = listOf("95.215.19.53", "2001:67c:2354:2::53"),
+            port = 443,
+            name = "dns.njal.la",
+            path = "dns-query",
+            label = "Njalla",
+            region = "europe"
         ),
         Dns.plaintextDns(
             id = "opendns",
