@@ -369,6 +369,7 @@ class MainActivity : LocalizationActivity(), PreferenceFragmentCompat.OnPreferen
     override fun onResume() {
         super.onResume()
         Repos.stage.onForeground()
+        UpdateService.onAppResumed()
 
         // Avoid multiple consecutive quick onResume events
         if (lastOnResume + 5 * 1000 > now()) return

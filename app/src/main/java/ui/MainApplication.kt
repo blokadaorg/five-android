@@ -94,6 +94,7 @@ class MainApplication: LocalizationApplication(), ViewModelStoreOwner {
         blockaRepoVM.repoConfig.observeForever {
             maybePerformAction(it)
             UpdateService.checkForUpdate(it)
+            UpdateService.checkForMessage(it)
             if (ContextService.hasActivityContext())
                 UpdateService.showUpdateAlertIfNecessary(
                     libreMode = !(tunnelVM.config.value?.vpnEnabled ?: false)

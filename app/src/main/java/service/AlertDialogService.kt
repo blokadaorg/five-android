@@ -19,6 +19,7 @@ import android.graphics.Typeface
 import android.widget.Toast
 import org.blokada.R
 import utils.Logger
+import java.util.ArrayDeque
 
 object AlertDialogService {
 
@@ -26,15 +27,21 @@ object AlertDialogService {
     private val context = ContextService
 
     private var displayedDialog: AlertDialog? = null
+    private val onAvailable = ArrayDeque<() -> Unit>()
+
+    fun runAfterCurrentDialog(action: () -> Unit) {
+        check(displayedDialog != null) { "No dialog is currently displayed" }
+        onAvailable.addLast(action)
+    }
 
     fun showAlert(
         message: Int,
         title: Int? = null,
         onDismiss: () -> Unit = {},
         additionalAction: Pair<String, () -> Unit>? = null
-    ) {
+    ): AlertShowResult {
         val ctx = context.requireContext()
-        showAlert(
+        return showAlert(
             message = ctx.getString(message),
             title = title?.let { ctx.getString(it) },
             onDismiss = onDismiss,
@@ -48,49 +55,54 @@ object AlertDialogService {
         onDismiss: () -> Unit = {},
         additionalAction: Pair<String, () -> Unit>? = null,
         positiveAction: Pair<String, () -> Unit>? = null
-    ) {
+    ): AlertShowResult {
         if (displayedDialog != null) {
             log.w("Ignoring new dialog request, one is already being displayed")
-            return
+            return AlertShowResult.BUSY
         }
 
         val ctx = context.requireContext()
         val builder = AlertDialog.Builder(ctx)
+        var afterDismiss: (() -> Unit)? = null
         builder.setTitle(title ?: ctx.getString(R.string.alert_error_header))
         builder.setMessage(message)
 
         if (positiveAction == null) {
-            builder.setPositiveButton(ctx.getString(R.string.universal_action_close)) { dialog, _ ->
+            builder.setPositiveButton(ctx.getString(R.string.universal_action_close)) { _, _ ->
                 dismiss()
             }
         } else {
             builder.setPositiveButton(positiveAction.first) { dialog, _ ->
-                dismiss()
-                positiveAction.second()
+                afterDismiss = positiveAction.second
+                dismiss(dialog)
             }
-            builder.setNeutralButton(ctx.getString(R.string.universal_action_close)) { dialog, _ ->
+            builder.setNeutralButton(ctx.getString(R.string.universal_action_close)) { _, _ ->
                 dismiss()
             }
         }
 
         additionalAction?.run {
             builder.setNeutralButton(first) { dialog, _ ->
-                dismiss()
-                second()
+                afterDismiss = second
+                dismiss(dialog)
             }
         }
 
         builder.setOnDismissListener {
-            dismiss(it)
+            if (displayedDialog == it) displayedDialog = null
+            afterDismiss?.invoke()
             onDismiss()
+            while (displayedDialog == null && onAvailable.isNotEmpty()) {
+                onAvailable.removeFirst().invoke()
+            }
         }
 
         displayedDialog = builder.showButNotCrash()
+        return if (displayedDialog != null) AlertShowResult.SHOWN else AlertShowResult.FAILED
     }
 
     fun dismiss(dialog: DialogInterface? = displayedDialog) {
         displayedDialog?.let {
-            // Android calls dismiss listener with a delay. The usual.
             if (it == dialog) {
                 it.dismiss()
                 displayedDialog = null
@@ -105,4 +117,10 @@ object AlertDialogService {
         }
     }
 
+}
+
+enum class AlertShowResult {
+    SHOWN,
+    BUSY,
+    FAILED
 }

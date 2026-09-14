@@ -54,6 +54,8 @@ object Defaults {
         newest = ""
     )
 
+    fun noSeenMessage() = BlockaRepoMessage()
+
     fun noPayload() = BlockaRepoPayload(
         cmd = ""
     )

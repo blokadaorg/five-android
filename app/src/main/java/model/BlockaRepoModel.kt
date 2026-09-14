@@ -28,6 +28,7 @@ data class BlockaRepoConfig(
     val forBuild: String,
     val supportedLanguages: List<String>? = null,
     val update: BlockaRepoUpdate? = null,
+    val message: BlockaRepoMessage? = null,
     val payload: BlockaRepoPayload? = null,
     val lastRefresh: Long = 0L
 ) {
@@ -36,7 +37,8 @@ data class BlockaRepoConfig(
 
     fun combine(common: BlockaRepoConfig) = copy(
         supportedLanguages = supportedLanguages ?: common.supportedLanguages,
-        update = update ?: common.update
+        update = update ?: common.update,
+        message = message ?: common.message
     )
 
 }
@@ -46,6 +48,15 @@ data class BlockaRepoUpdate(
     val mirrors: List<Uri>,
     val infoUrl: Uri,
     val newest: String
+)
+
+@JsonClass(generateAdapter = true)
+data class BlockaRepoMessage(
+    val id: String = "",
+    val title: String = "",
+    val body: String = "",
+    val url: Uri? = null,
+    val expires: String? = null // yyyy-MM-dd, device local; unparseable counts as expired
 )
 
 @JsonClass(generateAdapter = true)

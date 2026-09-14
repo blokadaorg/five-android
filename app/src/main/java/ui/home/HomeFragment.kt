@@ -115,7 +115,8 @@ class HomeFragment : Fragment() {
                             Links.changelog, getString(R.string.update_label_updated)
                         )
                     )
-                }
+                },
+                libreMode = !(vm.config.value?.vpnEnabled ?: false)
             )
         }
 

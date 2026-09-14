@@ -118,6 +118,7 @@ object PersistenceService {
         BypassedAppIds::class -> "bypassedApps"
         BlockaRepoConfig::class -> "blockaRepoConfig"
         BlockaRepoUpdate::class -> "blockaRepoUpdate"
+        BlockaRepoMessage::class -> "blockaRepoMessage"
         BlockaRepoPayload::class -> "blockaRepoPayload"
         BlockaAfterUpdate::class -> "blockaAfterUpdate"
         NetworkSpecificConfigs::class -> "networkSpecificConfigs"
@@ -139,6 +140,7 @@ object PersistenceService {
         BypassedAppIds::class -> Defaults.bypassedAppIds() as T
         BlockaRepoConfig::class -> Defaults.blockaRepoConfig() as T
         BlockaRepoUpdate::class -> Defaults.noSeenUpdate() as T
+        BlockaRepoMessage::class -> Defaults.noSeenMessage() as T
         BlockaRepoPayload::class -> Defaults.noPayload() as T
         BlockaAfterUpdate::class -> Defaults.noAfterUpdate() as T
         NetworkSpecificConfigs::class -> Defaults.noNetworkSpecificConfigs() as T
