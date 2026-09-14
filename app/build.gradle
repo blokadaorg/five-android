@@ -21,7 +21,7 @@ apply plugin: "kotlin-kapt"
 android {
     namespace "org.blokada"
     compileSdkVersion 34
-    ndkVersion "24.0.8215888"
+    ndkVersion "28.2.13676358"
 
     buildFeatures {
         buildConfig = true
