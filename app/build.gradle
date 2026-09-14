@@ -35,6 +35,7 @@ android {
         targetSdkVersion 31
         versionCode 666230201
         versionName "23.2.1"
+        buildConfigField "String", "REPO_URL", '"https://blokada.org/api/v5/repo.json"'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -46,6 +47,24 @@ android {
     buildTypes {
         debug {
             // By default it is a 'debuggable' build, signed with a debug key.
+            applicationIdSuffix ".debug"
+            // Local feed for testing the update and message flows, e.g. -PrepoUrl=http://10.0.2.2:8000/repo.json
+            manifestPlaceholders = [cleartext: project.hasProperty('repoUrl')]
+            if (project.hasProperty('repoUrl')) {
+                def repoUrl = project.property('repoUrl').toString()
+                def repoUri
+                try {
+                    repoUri = new URI(repoUrl)
+                } catch (Exception ignored) {
+                    throw new GradleException('repoUrl must be a non-secret HTTP(S) URL')
+                }
+                if (!(repoUri.scheme in ['http', 'https']) || !repoUri.host ||
+                    repoUri.userInfo || repoUri.query || repoUri.fragment) {
+                    throw new GradleException('repoUrl must be a non-secret HTTP(S) URL')
+                }
+                println "Debug build uses a repo.json override"
+                buildConfigField "String", "REPO_URL", "\"${repoUrl}\""
+            }
         }
 
         release {

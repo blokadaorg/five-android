@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.blokada.BuildConfig
 import org.blokada.R
 import utils.Logger
 
@@ -36,6 +37,7 @@ class AppUninstallService {
     private val packageManager by lazy { ctx.requireAppContext().packageManager }
 
     fun maybePromptToUninstall() {
+        if (BuildConfig.BUILD_TYPE == "debug") return
         val thisApp = ctx.requireAppContext().packageName
         val toUninstall = packageNames - thisApp
         val existing = toUninstall.filter { isPackageInstalled(it) }

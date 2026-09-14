@@ -77,6 +77,8 @@ object EnvironmentService {
 
     fun getVersionCode() = BuildConfig.VERSION_CODE
 
+    fun getRepoUrl() = BuildConfig.REPO_URL
+
     fun getDeviceId(): DeviceId {
         return getDeviceAlias() // TODO: more unique
     }
