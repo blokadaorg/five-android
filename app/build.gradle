@@ -33,8 +33,8 @@ android {
         applicationId "org.blokada" // Not a real name, see flavors below
         minSdkVersion 28
         targetSdkVersion 31
-        versionCode 666230201
-        versionName "23.2.1"
+        versionCode 666260100
+        versionName "26.1.0"
         buildConfigField "String", "REPO_URL", '"https://blokada.org/api/v5/repo.json"'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
