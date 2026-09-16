@@ -69,20 +69,23 @@ android {
 
         release {
 
-            def f = rootProject.file('keystore.properties')
-            if (f.exists()) {
-                println "Release build will use Blokada keystore"
-                Properties props = new Properties()
-                InputStream inputStream = new FileInputStream(f)
-                props.load(inputStream)
-                inputStream.close()
+            // Same mechanism as the blokada (v6) repo, but v5 ships with its own keystore.
+            if (System.getenv("BLOKADA5_KEYSTORE_BASE64") != null) {
+                println "🔹 Will use Blokada keystore for release builds"
+
+                def keystorePath = rootProject.file("keystore.jks")
+
+                // Write the keystore file from the environment variable
+                new FileOutputStream(keystorePath).withCloseable { fos ->
+                    fos.write(Base64.decoder.decode(System.getenv("BLOKADA5_KEYSTORE_BASE64")))
+                }
 
                 signingConfigs {
                     release {
-                        storeFile rootProject.file(props['BLOKADA_KEY_PATH'])
-                        storePassword props['BLOKADA_STORE_PASSWORD']
+                        storeFile keystorePath
+                        storePassword System.getenv("BLOKADA5_KEYSTORE_PWD")
                         keyAlias 'blokada'
-                        keyPassword props['BLOKADA_KEY_PASSWORD']
+                        keyPassword System.getenv("BLOKADA5_KEY_PWD")
                     }
                 }
                 signingConfig signingConfigs.release
