@@ -134,7 +134,7 @@ class NetworksDetailFragment : Fragment() {
 
                 actionChangeDns.setOnClickListener {
                     val fragment = DnsChoiceFragment.newInstance()
-                    fragment.selectedDns = cfg.dnsChoice
+                    fragment.selectedDns = dns.id // resolved, so a removed legacy choice highlights its fallback
                     fragment.useBlockaDnsInPlusMode = cfg.useBlockaDnsInPlusMode
                     fragment.onDnsSelected = { dns ->
                         viewModel.actionUseDns(cfg.network, dns, fragment.useBlockaDnsInPlusMode)

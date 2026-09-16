@@ -12,33 +12,19 @@
 
 package service
 
-import model.HistoryEntry
-import model.HistoryEntryType
-import model.Stats
-import org.junit.Test
+import model.AdsCounter
 import org.junit.Assert
-import java.util.*
+import org.junit.Test
 
 class SerializationServiceTest {
-    @Test fun basic() {
-        val stats = Stats(
-            allowed = 1,
-            denied = 2,
-            entries = listOf(
-                HistoryEntry(
-                    name = "example.com",
-                    type = HistoryEntryType.passed,
-                    time = Date(),
-                    requests = 1
-                )
-            )
-        )
+    @Test fun jsonRoundTripsAdsCounter() {
+        val original = AdsCounter(persistedValue = 42, runtimeValue = 7)
 
-        val json = SerializationService.serialize(stats)
-        val deserialized = SerializationService.deserialize(json, Stats::class)
+        val json = JsonSerializationService.serialize(original)
+        val restored = JsonSerializationService.deserialize(json, AdsCounter::class)
 
-        Assert.assertEquals(1, deserialized.allowed)
-        Assert.assertEquals(2, deserialized.denied)
-        Assert.assertEquals("example.com", deserialized.entries.first().name)
+        Assert.assertEquals(42L, restored.persistedValue)
+        Assert.assertEquals(7L, restored.runtimeValue)
+        Assert.assertEquals(42L + 7L, original.get())
     }
 }

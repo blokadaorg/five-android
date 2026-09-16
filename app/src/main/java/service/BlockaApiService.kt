@@ -153,7 +153,7 @@ object BlockaApiService {
     // Will retry failed requests 3 times (with 3s delay in between)
     private suspend fun <T> Call<T>.responseOrThrow(attempt: Int = 1): Response<T> {
         try {
-            if (attempt > 1) Logger.w("Api", "Retrying request (attempt: $attempt): ${this.request().url()}")
+            if (attempt > 1) Logger.w("Api", "Retrying request (attempt: $attempt): ${this.request().url}")
             val r = this.clone().execute()
             return if (r.isSuccessful) r else when {
                 r.code() == 403 -> throw TooManyDevices()

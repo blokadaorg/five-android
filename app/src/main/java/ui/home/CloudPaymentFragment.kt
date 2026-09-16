@@ -19,7 +19,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import model.AccountType

@@ -51,7 +51,7 @@ hyper-tls = "0.4"
 tower-service = "0.3"
 futures-util = "0.3"
 native-tls = { version = "^0.2", features = ["vendored"] }
-trust-dns-client= { version = "0.20" }
+trust-dns-client = { version = "0.20" }
 trust-dns-proto = { version = "0.20" }
 trust-dns-rustls = { version = "0.20", optional = true }
 trust-dns-server = { version = "0.20" }

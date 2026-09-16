@@ -15,7 +15,6 @@ package ui
 import androidx.lifecycle.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import model.ActiveUntil
 import repository.Repos

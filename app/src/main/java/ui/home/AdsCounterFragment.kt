@@ -20,7 +20,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.blokada.R
 import repository.Repos
