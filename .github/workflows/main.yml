@@ -1,28 +1,272 @@
-name: Blokada 5 for Android (CI)
+name: Blokada 5 CI
+run-name: Build and sign ${{ github.sha }}
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
-env:
-  main_project_module: app
+permissions:
+  contents: read
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
-      - name: Check out repo
+      - name: Check out source
         uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - name: Get JDK
+      - name: Set up JDK
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Build app
-        run: ./gradlew testFiveDebugUnitTest assembleFiveRelease
+      - name: Test and build unsigned APK
+        run: ./gradlew --no-daemon testFiveDebugUnitTest assembleFiveRelease
+
+      - name: Verify unsigned APK
+        id: verify
+        env:
+          EXPECTED_PACKAGE: org.blokada.origin.alarm
+        run: |
+          set -euo pipefail
+
+          mapfile -t apks < <(find app/build/outputs/apk/five/release -maxdepth 1 -type f -name '*.apk')
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "Expected exactly one unsigned release APK, found ${#apks[@]}" >&2
+            exit 1
+          fi
+          cp "${apks[0]}" unsigned.apk
+
+          build_tools="$(find "${ANDROID_HOME}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          apksigner="$build_tools/apksigner"
+          aapt="$build_tools/aapt"
+          zipalign="$build_tools/zipalign"
+          for tool in "$apksigner" "$aapt" "$zipalign"; do
+            if [ ! -x "$tool" ]; then
+              echo "Android SDK tool is unavailable: $tool" >&2
+              exit 1
+            fi
+          done
+
+          if "$apksigner" verify unsigned.apk >/dev/null 2>&1; then
+            echo "Build unexpectedly produced a signed APK" >&2
+            exit 1
+          fi
+          "$zipalign" -c -P 16 -v 4 unsigned.apk
+          unzip -Z1 unsigned.apk > apk-entries.txt
+          if grep -Fxq 'assets/adi-registration.properties' apk-entries.txt; then
+            echo "Developer verification registration must not be included in a release build" >&2
+            exit 1
+          fi
+
+          "$aapt" dump badging unsigned.apk > badging.txt
+          badging="$(head -1 badging.txt)"
+          package_name="$(sed -n "s/.*package: name='\([^']*\)'.*/\1/p" <<< "$badging")"
+          version_name="$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<< "$badging")"
+          version_code="$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" <<< "$badging")"
+          if [ "$package_name" != "$EXPECTED_PACKAGE" ]; then
+            echo "Unexpected package: $package_name" >&2
+            exit 1
+          fi
+
+          sha256sum unsigned.apk > unsigned.apk.sha256
+          jq -n \
+            --arg source_sha "$GITHUB_SHA" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg package_name "$package_name" \
+            --arg version_name "$version_name" \
+            --arg version_code "$version_code" \
+            --arg build_tools_version "$(basename "$build_tools")" \
+            '{source_sha: $source_sha, run_id: $run_id, run_attempt: $run_attempt, package_name: $package_name, version_name: $version_name, version_code: $version_code, build_tools_version: $build_tools_version}' \
+            > build-metadata.json
+
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+
+      - name: Upload unsigned build
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-apk-${{ github.run_id }}
+          path: |
+            unsigned.apk
+            unsigned.apk.sha256
+            build-metadata.json
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 1
+
+      - name: Summarize build
+        run: |
+          {
+            echo "### Unsigned build"
+            echo "- Version: \`${{ steps.verify.outputs.version_name }}\`"
+            echo "- Version code: \`${{ steps.verify.outputs.version_code }}\`"
+            echo "- Source commit: \`$GITHUB_SHA\`"
+            echo "- Build run: \`$GITHUB_RUN_ID\`, attempt \`$GITHUB_RUN_ATTEMPT\`"
+            echo ""
+            echo "The isolated signing job will sign this build automatically."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  sign:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Download unsigned build
+        uses: actions/download-artifact@v8
+        with:
+          name: unsigned-apk-${{ github.run_id }}
+          path: unsigned-build
+
+      - name: Verify unsigned build provenance
+        env:
+          EXPECTED_PACKAGE: org.blokada.origin.alarm
+        run: |
+          set -euo pipefail
+          cd unsigned-build
+
+          jq -e \
+            --arg source_sha "$GITHUB_SHA" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg package_name "$EXPECTED_PACKAGE" \
+            '.source_sha == $source_sha and .run_id == $run_id and .package_name == $package_name' \
+            build-metadata.json >/dev/null || {
+              echo "Unsigned build metadata does not match the selected run" >&2
+              exit 1
+            }
+          sha256sum --check unsigned.apk.sha256
+
+          build_tools="$(find "${ANDROID_HOME}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          if "$build_tools/apksigner" verify unsigned.apk >/dev/null 2>&1; then
+            echo "Selected APK is already signed" >&2
+            exit 1
+          fi
+          "$build_tools/zipalign" -c -P 16 -v 4 unsigned.apk
+
+      - name: Sign APK
+        env:
+          BLOKADA5_KEYSTORE_BASE64: ${{ secrets.BLOKADA5_KEYSTORE_BASE64 }}
+          BLOKADA5_KEYSTORE_PWD: ${{ secrets.BLOKADA5_KEYSTORE_PWD }}
+          BLOKADA5_KEY_PWD: ${{ secrets.BLOKADA5_KEY_PWD }}
+        run: |
+          set -euo pipefail
+          for name in BLOKADA5_KEYSTORE_BASE64 BLOKADA5_KEYSTORE_PWD BLOKADA5_KEY_PWD; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required GitHub Actions secret: $name" >&2
+              exit 1
+            fi
+          done
+
+          keystore="$RUNNER_TEMP/blokada5.jks"
+          printf '%s' "$BLOKADA5_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          build_tools="$(find "${ANDROID_HOME}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$build_tools/apksigner" sign \
+            --ks "$keystore" \
+            --ks-key-alias blokada \
+            --ks-pass env:BLOKADA5_KEYSTORE_PWD \
+            --key-pass env:BLOKADA5_KEY_PWD \
+            --out signed.apk \
+            unsigned-build/unsigned.apk
+
+      - name: Remove decoded keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/blokada5.jks"
+
+      - name: Verify signed APK
+        id: verify
+        env:
+          EXPECTED_CERT_SHA256: 96fc668a9f97f3369f9803b4af0af0b29ae06ce27bce22cef40cc44d0c433af9
+          EXPECTED_PACKAGE: org.blokada.origin.alarm
+        run: |
+          set -euo pipefail
+          build_tools="$(find "${ANDROID_HOME}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          apksigner="$build_tools/apksigner"
+          aapt="$build_tools/aapt"
+          zipalign="$build_tools/zipalign"
+
+          "$apksigner" verify --verbose --print-certs signed.apk | tee signing-report.txt
+          actual_cert="$($apksigner verify --print-certs signed.apk \
+            | sed -n 's/^.*certificate SHA-256 digest: //p' \
+            | sort -u)"
+          if [ "$actual_cert" != "$EXPECTED_CERT_SHA256" ]; then
+            echo "Unexpected signing certificate: $actual_cert" >&2
+            exit 1
+          fi
+          "$zipalign" -c -P 16 -v 4 signed.apk
+
+          "$aapt" dump badging signed.apk > badging.txt
+          badging="$(head -1 badging.txt)"
+          package_name="$(sed -n "s/.*package: name='\([^']*\)'.*/\1/p" <<< "$badging")"
+          version_name="$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<< "$badging")"
+          version_code="$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" <<< "$badging")"
+          if [ "$package_name" != "$EXPECTED_PACKAGE" ]; then
+            echo "Unexpected package: $package_name" >&2
+            exit 1
+          fi
+
+          metadata_version_name="$(jq -r '.version_name' unsigned-build/build-metadata.json)"
+          metadata_version_code="$(jq -r '.version_code' unsigned-build/build-metadata.json)"
+          if [ "$version_name" != "$metadata_version_name" ] || [ "$version_code" != "$metadata_version_code" ]; then
+            echo "Signed APK version does not match unsigned build metadata" >&2
+            exit 1
+          fi
+
+          output="blokada5-${version_name}-${GITHUB_SHA:0:12}.apk"
+          mv signed.apk "$output"
+          sha256sum "$output" > "$output.sha256"
+          signed_sha256="$(sha256sum "$output" | awk '{print $1}')"
+          jq -n \
+            --slurpfile build unsigned-build/build-metadata.json \
+            --arg signing_run_id "$GITHUB_RUN_ID" \
+            --arg signing_run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg certificate_sha256 "$EXPECTED_CERT_SHA256" \
+            --arg build_tools_version "$(basename "$build_tools")" \
+            --arg signed_apk "$output" \
+            --arg signed_apk_sha256 "$signed_sha256" \
+            '{build: $build[0], signing: {run_id: $signing_run_id, run_attempt: $signing_run_attempt, certificate_sha256: $certificate_sha256, build_tools_version: $build_tools_version, apk: $signed_apk, apk_sha256: $signed_apk_sha256}}' \
+            > signing-metadata.json
+          echo "apk=$output" >> "$GITHUB_OUTPUT"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "build_tools_version=$(basename "$build_tools")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload signed candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: blokada5-signed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ steps.verify.outputs.apk }}
+            ${{ steps.verify.outputs.apk }}.sha256
+            signing-report.txt
+            signing-metadata.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summarize signed candidate
+        run: |
+          {
+            echo "### Signed candidate"
+            echo "- Version: \`${{ steps.verify.outputs.version_name }}\`"
+            echo "- Version code: \`${{ steps.verify.outputs.version_code }}\`"
+            echo "- Source commit: \`$GITHUB_SHA\`"
+            echo "- Workflow run: \`$GITHUB_RUN_ID\`, attempt \`$GITHUB_RUN_ATTEMPT\`"
+            echo "- Signing build tools: \`${{ steps.verify.outputs.build_tools_version }}\`"
+            echo ""
+            echo "Test this APK before creating a version tag or GitHub Release."
+          } >> "$GITHUB_STEP_SUMMARY"
