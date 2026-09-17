@@ -40,6 +40,15 @@ jobs:
       - name: Test
         run: ./gradlew --no-daemon testFiveDebugUnitTest
 
+      - name: Validate build purpose
+        env:
+          PURPOSE: ${{ inputs.purpose }}
+        run: |
+          case "$PURPOSE" in
+            release-candidate|developer-verification) ;;
+            *) echo "Unsupported build purpose" >&2; exit 1 ;;
+          esac
+
       - name: Add developer verification registration
         if: inputs.purpose == 'developer-verification'
         env:
@@ -73,6 +82,7 @@ jobs:
         env:
           EXPECTED_CERT_SHA256: 96fc668a9f97f3369f9803b4af0af0b29ae06ce27bce22cef40cc44d0c433af9
           EXPECTED_PACKAGE: org.blokada.origin.alarm
+          PURPOSE: ${{ inputs.purpose }}
         run: |
           set -euo pipefail
 
@@ -108,7 +118,7 @@ jobs:
           version_name="$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<< "$badging")"
           version_code="$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" <<< "$badging")"
           unzip -Z1 "$apk" > apk-entries.txt
-          if [ "${{ inputs.purpose }}" = "developer-verification" ]; then
+          if [ "$PURPOSE" = "developer-verification" ]; then
             if ! grep -Fxq 'assets/adi-registration.properties' apk-entries.txt; then
               echo "Developer verification registration is missing from the APK" >&2
               exit 1
@@ -140,16 +150,18 @@ jobs:
           retention-days: 14
 
       - name: Summarize candidate
+        env:
+          PURPOSE: ${{ inputs.purpose }}
         run: |
           {
             echo "### Signed candidate"
-            echo "- Purpose: \`${{ inputs.purpose }}\`"
+            echo "- Purpose: \`$PURPOSE\`"
             echo "- Version: \`${{ steps.verify.outputs.version_name }}\`"
             echo "- Version code: \`${{ steps.verify.outputs.version_code }}\`"
             echo "- Source commit: \`${{ github.sha }}\`"
-            echo "- Artifact: \`blokada5-${{ inputs.purpose }}-${{ github.run_id }}\`"
+            echo "- Artifact: \`blokada5-$PURPOSE-$GITHUB_RUN_ID\`"
             echo ""
-            if [ "${{ inputs.purpose }}" = "developer-verification" ]; then
+            if [ "$PURPOSE" = "developer-verification" ]; then
               echo "Upload this APK only to Play Console for package ownership verification. Do not distribute it."
             else
               echo "Test this APK before creating a version tag or GitHub Release."
