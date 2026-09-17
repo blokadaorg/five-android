@@ -1,0 +1,121 @@
+name: Build signed Blokada 5 APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: signed-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out candidate revision
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Test
+        run: ./gradlew --no-daemon testFiveDebugUnitTest
+
+      - name: Build signed release APK
+        env:
+          BLOKADA5_KEYSTORE_BASE64: ${{ secrets.BLOKADA5_KEYSTORE_BASE64 }}
+          BLOKADA5_KEYSTORE_PWD: ${{ secrets.BLOKADA5_KEYSTORE_PWD }}
+          BLOKADA5_KEY_PWD: ${{ secrets.BLOKADA5_KEY_PWD }}
+        run: |
+          set -euo pipefail
+          for name in BLOKADA5_KEYSTORE_BASE64 BLOKADA5_KEYSTORE_PWD BLOKADA5_KEY_PWD; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required GitHub Actions secret: $name" >&2
+              exit 1
+            fi
+          done
+          ./gradlew --no-daemon assembleFiveRelease
+
+      - name: Verify release APK
+        id: verify
+        env:
+          EXPECTED_CERT_SHA256: 96fc668a9f97f3369f9803b4af0af0b29ae06ce27bce22cef40cc44d0c433af9
+          EXPECTED_PACKAGE: org.blokada.origin.alarm
+        run: |
+          set -euo pipefail
+
+          mapfile -t apks < <(find app/build/outputs/apk/five/release -maxdepth 1 -type f -name '*.apk')
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "Expected exactly one release APK, found ${#apks[@]}" >&2
+            exit 1
+          fi
+          apk="${apks[0]}"
+
+          apksigner="$(find "${ANDROID_HOME}/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          aapt="$(find "${ANDROID_HOME}/build-tools" -type f -name aapt | sort -V | tail -1)"
+          if [ -z "$apksigner" ] || [ -z "$aapt" ]; then
+            echo "Android SDK verification tools are unavailable" >&2
+            exit 1
+          fi
+
+          "$apksigner" verify --verbose --print-certs "$apk" | tee signing-report.txt
+          actual_cert="$($apksigner verify --print-certs "$apk" \
+            | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')"
+          if [ "$actual_cert" != "$EXPECTED_CERT_SHA256" ]; then
+            echo "Unexpected signing certificate: $actual_cert" >&2
+            exit 1
+          fi
+
+          badging="$($aapt dump badging "$apk" | head -1)"
+          actual_package="$(sed -n "s/.*package: name='\([^']*\)'.*/\1/p" <<< "$badging")"
+          if [ "$actual_package" != "$EXPECTED_PACKAGE" ]; then
+            echo "Unexpected package: $actual_package" >&2
+            exit 1
+          fi
+
+          version_name="$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<< "$badging")"
+          version_code="$(sed -n "s/.*versionCode='\([^']*\)'.*/\1/p" <<< "$badging")"
+          output="blokada5-${version_name}-${GITHUB_SHA:0:12}.apk"
+          cp "$apk" "$output"
+          sha256sum "$output" > "$output.sha256"
+
+          echo "apk=$output" >> "$GITHUB_OUTPUT"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+
+      - name: Upload signed candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: blokada5-${{ steps.verify.outputs.version_name }}-${{ github.run_id }}
+          path: |
+            ${{ steps.verify.outputs.apk }}
+            ${{ steps.verify.outputs.apk }}.sha256
+            signing-report.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summarize candidate
+        run: |
+          {
+            echo "### Signed candidate"
+            echo "- Version: \`${{ steps.verify.outputs.version_name }}\`"
+            echo "- Version code: \`${{ steps.verify.outputs.version_code }}\`"
+            echo "- Source commit: \`${{ github.sha }}\`"
+            echo "- Artifact: \`blokada5-${{ steps.verify.outputs.version_name }}-${{ github.run_id }}\`"
+            echo ""
+            echo "Test this APK before creating a version tag or GitHub Release."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove decoded keystore
+        if: always()
+        run: rm -f keystore.jks
