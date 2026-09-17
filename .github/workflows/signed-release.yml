@@ -166,7 +166,8 @@ jobs:
 
           "$apksigner" verify --verbose --print-certs "$apk" | tee signing-report.txt
           actual_cert="$($apksigner verify --print-certs "$apk" \
-            | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')"
+            | sed -n 's/^.*certificate SHA-256 digest: //p' \
+            | sort -u)"
           if [ "$actual_cert" != "$EXPECTED_CERT_SHA256" ]; then
             echo "Unexpected signing certificate: $actual_cert" >&2
             exit 1
