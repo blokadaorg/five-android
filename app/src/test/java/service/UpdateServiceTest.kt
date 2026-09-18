@@ -80,9 +80,46 @@ class UpdateServiceTest {
 
     @Test fun acceptsOnlySafeMessageLinks() {
         assertEquals("https://blokada.org/help", validRepoMessageUrl("https://blokada.org/help"))
+        assertEquals(
+            "https://app.blokada.org/?foobar=something",
+            validRepoMessageUrl("https://app.blokada.org/?foobar=something")
+        )
         assertEquals(null, validRepoMessageUrl("http://blokada.org/help"))
         assertEquals(null, validRepoMessageUrl("https://user:secret@blokada.org/help"))
         assertEquals(null, validRepoMessageUrl("market://details?id=org.blokada"))
         assertEquals(null, validRepoMessageUrl("not a url"))
+    }
+
+    @Test fun notifiesOnlyForEligibleUnnotifiedMessage() {
+        assertEquals(true, shouldNotifyRepoMessage(message, seenId = "", notifiedId = "", today = today))
+        assertEquals(
+            false,
+            shouldNotifyRepoMessage(message, seenId = "", notifiedId = message.id, today = today)
+        )
+        assertEquals(
+            false,
+            shouldNotifyRepoMessage(message, seenId = message.id, notifiedId = "", today = today)
+        )
+        assertEquals(
+            false,
+            shouldNotifyRepoMessage(
+                message.copy(expires = today.minusDays(1).toString()),
+                seenId = "",
+                notifiedId = "",
+                today = today
+            )
+        )
+    }
+
+    @Test fun changedContentWithSameIdDoesNotNotifyAgain() {
+        assertEquals(
+            false,
+            shouldNotifyRepoMessage(
+                message.copy(title = "Changed title", body = "Changed body"),
+                seenId = "",
+                notifiedId = message.id,
+                today = today
+            )
+        )
     }
 }

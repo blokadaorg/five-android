@@ -95,12 +95,12 @@ class MainApplication: LocalizationApplication(), ViewModelStoreOwner {
             maybePerformAction(it)
             UpdateService.checkForUpdate(it)
             UpdateService.checkForMessage(it)
-            if (ContextService.hasActivityContext())
+            if (Repos.stage.isForeground())
                 UpdateService.showUpdateAlertIfNecessary(
                     libreMode = !(tunnelVM.config.value?.vpnEnabled ?: false)
                 )
             else
-                UpdateService.showUpdateNotificationIfNecessary()
+                UpdateService.showBackgroundNotificationsIfNecessary()
         }
 
         statsVM.history.observeForever {

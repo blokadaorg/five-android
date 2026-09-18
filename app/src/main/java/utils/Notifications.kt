@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import engine.Host
 import model.AppState
 import model.BlokadaException
+import model.BlockaRepoMessage
 import model.TunnelStatus
 import org.blokada.R
 import service.Localised
@@ -254,6 +255,24 @@ class UpdateNotification(versionName: String): NotificationPrototype(3, Notifica
         intentActivity.putExtra("update", true)
         val piActivity = ctx.getPendingIntentForActivity(intentActivity, 0)
         b.setContentIntent(piActivity)
+    }
+)
+
+class RepoMessageNotification(message: BlockaRepoMessage): NotificationPrototype(
+    9,
+    NotificationChannels.ANNOUNCEMENT,
+    autoCancel = true,
+    create = { ctx ->
+        val builder = NotificationCompat.Builder(ctx)
+        builder.setContentTitle(message.title)
+        builder.setContentText(message.body)
+        builder.setStyle(NotificationCompat.BigTextStyle().bigText(message.body))
+        builder.setSmallIcon(R.drawable.ic_stat_blokada)
+        builder.setPriority(NotificationCompat.PRIORITY_HIGH)
+
+        val intent = Intent(ctx, MainActivity::class.java)
+        intent.putExtra("repoMessage", message.id)
+        builder.setContentIntent(ctx.getPendingIntentForActivity(intent, PendingIntent.FLAG_UPDATE_CURRENT, 9))
     }
 )
 

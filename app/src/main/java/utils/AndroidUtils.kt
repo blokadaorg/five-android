@@ -53,11 +53,15 @@ fun Context.getPendingIntentForService(intent: Intent, flags: Int): PendingInten
     }
 }
 
-fun Context.getPendingIntentForActivity(intent: Intent, flags: Int): PendingIntent {
+fun Context.getPendingIntentForActivity(
+    intent: Intent,
+    flags: Int,
+    requestCode: Int = 0
+): PendingIntent {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        PendingIntent.getActivity(this, 0, intent, flags or PendingIntent.FLAG_IMMUTABLE)
+        PendingIntent.getActivity(this, requestCode, intent, flags or PendingIntent.FLAG_IMMUTABLE)
     } else {
-        PendingIntent.getActivity(this, 0, intent, flags)
+        PendingIntent.getActivity(this, requestCode, intent, flags)
     }
 }
 

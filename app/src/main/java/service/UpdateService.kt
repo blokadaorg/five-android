@@ -23,6 +23,8 @@ import ui.executeCommand
 import ui.utils.cause
 import ui.utils.openInBrowser
 import utils.Logger
+import utils.NotificationChannels
+import utils.RepoMessageNotification
 import utils.UpdateNotification
 import java.net.URI
 import java.time.LocalDate
@@ -75,8 +77,12 @@ object UpdateService {
             RepoMessageEligibility.INVALID_EXPIRY -> {
                 log.w("Could not parse message expiry: ${message?.expires}")
                 messageInfo = null
+                cancelRepoMessageNotification()
             }
-            else -> messageInfo = null
+            else -> {
+                messageInfo = null
+                cancelRepoMessageNotification()
+            }
         }
     }
 
@@ -108,6 +114,30 @@ object UpdateService {
     fun showUpdateNotificationIfNecessary() {
         updateInfo?.let {
             notification.show(UpdateNotification(it.newest))
+        }
+    }
+
+    fun showBackgroundNotificationsIfNecessary() {
+        showUpdateNotificationIfNecessary()
+        showRepoMessageNotificationIfNecessary()
+    }
+
+    @Synchronized
+    private fun showRepoMessageNotificationIfNecessary() {
+        val msg = messageInfo ?: return
+        val seenId = persistence.load(BlockaRepoMessage::class).id
+        val notifiedId = persistence.load(BlockaRepoMessageNotification::class).messageId
+        if (!shouldNotifyRepoMessage(msg, seenId, notifiedId, LocalDate.now())) return
+        if (!notification.hasPermissions(NotificationChannels.ANNOUNCEMENT)) {
+            log.w("Announcement notifications are disabled")
+            return
+        }
+
+        try {
+            notification.show(RepoMessageNotification(msg))
+            persistence.save(BlockaRepoMessageNotification(msg.id))
+        } catch (ex: Exception) {
+            log.e("Could not show repo message notification".cause(ex))
         }
     }
 
@@ -166,6 +196,7 @@ object UpdateService {
             ) != RepoMessageEligibility.ELIGIBLE
         ) {
             messageInfo = null
+            cancelRepoMessageNotification()
             return false
         }
         val ctx = context.requireContext()
@@ -182,6 +213,7 @@ object UpdateService {
         when (shown) {
             AlertShowResult.SHOWN -> {
                 persistence.save(msg)
+                cancelRepoMessageNotification()
                 if (messageInfo == msg) messageInfo = null
             }
             AlertShowResult.BUSY -> alert.runAfterCurrentDialog { showPendingMessageIfNecessary() }
@@ -267,6 +299,12 @@ object UpdateService {
         log.v("Resetting seen update and message marks")
         persistence.save(Defaults.noSeenUpdate())
         persistence.save(Defaults.noSeenMessage())
+        persistence.save(Defaults.noNotifiedMessage())
+        cancelRepoMessageNotification()
+    }
+
+    private fun cancelRepoMessageNotification() {
+        notification.cancel(RepoMessageNotification(Defaults.noSeenMessage()))
     }
 
     private fun hasUserSeenAfterUpdateDialog(appVersion: Int): Boolean {
@@ -351,4 +389,14 @@ internal fun validRepoMessageUrl(url: Uri?): Uri? {
     } catch (_: Exception) {
         null
     }
+}
+
+internal fun shouldNotifyRepoMessage(
+    message: BlockaRepoMessage?,
+    seenId: String,
+    notifiedId: String,
+    today: LocalDate
+): Boolean {
+    return repoMessageEligibility(message, seenId, today) == RepoMessageEligibility.ELIGIBLE &&
+        message!!.id != notifiedId
 }
