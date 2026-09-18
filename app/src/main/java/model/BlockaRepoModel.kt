@@ -60,6 +60,11 @@ data class BlockaRepoMessage(
 )
 
 @JsonClass(generateAdapter = true)
+data class BlockaRepoMessageNotification(
+    val messageId: String = ""
+)
+
+@JsonClass(generateAdapter = true)
 data class BlockaAfterUpdate(
     val dialogShownForVersion: Int? = null
 )

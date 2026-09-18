@@ -100,7 +100,7 @@ class MainApplication: LocalizationApplication(), ViewModelStoreOwner {
                     libreMode = !(tunnelVM.config.value?.vpnEnabled ?: false)
                 )
             else
-                UpdateService.showUpdateNotificationIfNecessary()
+                UpdateService.showBackgroundNotificationsIfNecessary()
         }
 
         statsVM.history.observeForever {

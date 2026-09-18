@@ -72,7 +72,13 @@ object NotificationService {
         notificationManager.createNotificationChannel(mChannel)
     }
 
-    fun hasPermissions(): Boolean {
-        return notificationManager.areNotificationsEnabled()
+    fun hasPermissions(channel: NotificationChannels? = null): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+            !notificationManager.areNotificationsEnabled()
+        ) return false
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channel != null) {
+            notificationManager.getNotificationChannel(channel.name)?.importance !=
+                NotificationManager.IMPORTANCE_NONE
+        } else true
     }
 }

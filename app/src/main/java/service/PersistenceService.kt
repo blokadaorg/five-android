@@ -119,6 +119,7 @@ object PersistenceService {
         BlockaRepoConfig::class -> "blockaRepoConfig"
         BlockaRepoUpdate::class -> "blockaRepoUpdate"
         BlockaRepoMessage::class -> "blockaRepoMessage"
+        BlockaRepoMessageNotification::class -> "blockaRepoMessageNotification"
         BlockaRepoPayload::class -> "blockaRepoPayload"
         BlockaAfterUpdate::class -> "blockaAfterUpdate"
         NetworkSpecificConfigs::class -> "networkSpecificConfigs"
@@ -141,6 +142,7 @@ object PersistenceService {
         BlockaRepoConfig::class -> Defaults.blockaRepoConfig() as T
         BlockaRepoUpdate::class -> Defaults.noSeenUpdate() as T
         BlockaRepoMessage::class -> Defaults.noSeenMessage() as T
+        BlockaRepoMessageNotification::class -> Defaults.noNotifiedMessage() as T
         BlockaRepoPayload::class -> Defaults.noPayload() as T
         BlockaAfterUpdate::class -> Defaults.noAfterUpdate() as T
         NetworkSpecificConfigs::class -> Defaults.noNetworkSpecificConfigs() as T

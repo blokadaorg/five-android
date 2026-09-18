@@ -56,6 +56,8 @@ object Defaults {
 
     fun noSeenMessage() = BlockaRepoMessage()
 
+    fun noNotifiedMessage() = BlockaRepoMessageNotification()
+
     fun noPayload() = BlockaRepoPayload(
         cmd = ""
     )

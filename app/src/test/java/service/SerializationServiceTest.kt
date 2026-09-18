@@ -13,6 +13,7 @@
 package service
 
 import model.AdsCounter
+import model.BlockaRepoMessageNotification
 import org.junit.Assert
 import org.junit.Test
 
@@ -26,5 +27,14 @@ class SerializationServiceTest {
         Assert.assertEquals(42L, restored.persistedValue)
         Assert.assertEquals(7L, restored.runtimeValue)
         Assert.assertEquals(42L + 7L, original.get())
+    }
+
+    @Test fun jsonRoundTripsRepoMessageNotification() {
+        val original = BlockaRepoMessageNotification(messageId = "maintenance-1")
+
+        val json = JsonSerializationService.serialize(original)
+        val restored = JsonSerializationService.deserialize(json, BlockaRepoMessageNotification::class)
+
+        Assert.assertEquals(original, restored)
     }
 }

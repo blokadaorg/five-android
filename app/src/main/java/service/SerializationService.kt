@@ -93,6 +93,10 @@ object JsonSerializationService : SerializationService {
                 val adapter = moshi.adapter(BlockaRepoMessage::class.java)
                 return adapter.toJson(obj)
             }
+            is BlockaRepoMessageNotification -> {
+                val adapter = moshi.adapter(BlockaRepoMessageNotification::class.java)
+                return adapter.toJson(obj)
+            }
             is BlockaRepoPayload -> {
                 val adapter = moshi.adapter(BlockaRepoPayload::class.java)
                 return adapter.toJson(obj)
@@ -170,6 +174,10 @@ object JsonSerializationService : SerializationService {
             }
             BlockaRepoMessage::class -> {
                 val adapter = moshi.adapter(BlockaRepoMessage::class.java)
+                return adapter.fromJson(serialized) as T
+            }
+            BlockaRepoMessageNotification::class -> {
+                val adapter = moshi.adapter(BlockaRepoMessageNotification::class.java)
                 return adapter.fromJson(serialized) as T
             }
             BlockaRepoPayload::class -> {
