@@ -196,6 +196,7 @@ object UpdateService {
             ) != RepoMessageEligibility.ELIGIBLE
         ) {
             messageInfo = null
+            cancelRepoMessageNotification()
             return false
         }
         val ctx = context.requireContext()

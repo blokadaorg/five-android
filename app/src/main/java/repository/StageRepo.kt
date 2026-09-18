@@ -56,6 +56,8 @@ class StageRepo {
         writeStage.value = AppStage.Background
     }
 
+    fun isForeground() = writeStage.value == AppStage.Foreground
+
     fun onDestroy() {
         writeStage.value = AppStage.Destroying
     }

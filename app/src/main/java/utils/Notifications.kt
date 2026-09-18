@@ -259,7 +259,7 @@ class UpdateNotification(versionName: String): NotificationPrototype(3, Notifica
 )
 
 class RepoMessageNotification(message: BlockaRepoMessage): NotificationPrototype(
-    6,
+    9,
     NotificationChannels.ANNOUNCEMENT,
     autoCancel = true,
     create = { ctx ->
@@ -269,11 +269,10 @@ class RepoMessageNotification(message: BlockaRepoMessage): NotificationPrototype
         builder.setStyle(NotificationCompat.BigTextStyle().bigText(message.body))
         builder.setSmallIcon(R.drawable.ic_stat_blokada)
         builder.setPriority(NotificationCompat.PRIORITY_HIGH)
-        builder.setOnlyAlertOnce(true)
 
         val intent = Intent(ctx, MainActivity::class.java)
         intent.putExtra("repoMessage", message.id)
-        builder.setContentIntent(ctx.getPendingIntentForActivity(intent, PendingIntent.FLAG_UPDATE_CURRENT, 6))
+        builder.setContentIntent(ctx.getPendingIntentForActivity(intent, PendingIntent.FLAG_UPDATE_CURRENT, 9))
     }
 )
 
