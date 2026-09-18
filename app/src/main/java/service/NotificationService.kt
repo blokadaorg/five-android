@@ -18,6 +18,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import androidx.core.app.NotificationManagerCompat
 import utils.Logger
 import utils.NotificationChannels
 import utils.NotificationPrototype
@@ -73,9 +74,7 @@ object NotificationService {
     }
 
     fun hasPermissions(channel: NotificationChannels? = null): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-            !notificationManager.areNotificationsEnabled()
-        ) return false
+        if (!NotificationManagerCompat.from(context.requireContext()).areNotificationsEnabled()) return false
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channel != null) {
             notificationManager.getNotificationChannel(channel.name)?.importance !=
                 NotificationManager.IMPORTANCE_NONE
