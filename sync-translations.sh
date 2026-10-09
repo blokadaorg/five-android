@@ -10,7 +10,8 @@ commit="sync: update translate strings to: $hash"
 
 echo $commit
 
-./translate.py -a android5
+# translate.py defaults to a target three levels up, for the app repo layout.
+./translate.py -a android5 -t ../..
 
 cd ../../
 
