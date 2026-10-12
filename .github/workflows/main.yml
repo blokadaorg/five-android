@@ -27,6 +27,18 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Install pinned NDK
+        run: |
+          set -euo pipefail
+
+          # Runner images rotate their preinstalled NDKs, so install the one app/build.gradle pins.
+          ndk_version="$(sed -n 's/^ *ndkVersion "\(.*\)"$/\1/p' app/build.gradle)"
+          if [ -z "$ndk_version" ]; then
+            echo "Could not read ndkVersion from app/build.gradle" >&2
+            exit 1
+          fi
+          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "ndk;${ndk_version}"
+
       - name: Test and build unsigned APK
         run: ./gradlew --no-daemon testFiveDebugUnitTest assembleFiveRelease
 
